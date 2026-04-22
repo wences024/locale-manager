@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Output standalone para Railway/Docker
-  output: process.env.RAILWAY_ENVIRONMENT ? 'standalone' : undefined,
+  // Standalone output per Railway — sempre attivo così Nixpacks genera il server
+  output: 'standalone',
   webpack: (config) => {
     config.resolve.fallback = { fs: false };
     return config;
