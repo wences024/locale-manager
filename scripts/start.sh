@@ -16,4 +16,5 @@ if [ ! -f "data/db.json" ]; then
 fi
 
 echo "🚀 Avvio del server..."
-node .next/standalone/server.js
+# HOSTNAME=0.0.0.0 necessario affinché Railway possa raggiungere il container
+HOSTNAME=0.0.0.0 node .next/standalone/server.js
