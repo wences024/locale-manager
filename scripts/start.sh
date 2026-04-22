@@ -6,15 +6,18 @@ echo "📂 Copio file statici nel bundle standalone..."
 cp -r .next/static .next/standalone/.next/static 2>/dev/null || true
 cp -r public .next/standalone/public 2>/dev/null || true
 
-# 2. Crea cartella data se non esiste
-mkdir -p data
+# 2. Il server standalone fa process.chdir(__dirname) → cwd diventa .next/standalone/
+#    Quindi il database deve stare in .next/standalone/data/db.json
+mkdir -p .next/standalone/data
 
-# 3. Seed database demo se non esiste ancora
-if [ ! -f "data/db.json" ]; then
+if [ ! -f ".next/standalone/data/db.json" ]; then
   echo "📦 Database non trovato, inizializzazione dati demo..."
+  # Seed scrive in ./data/db.json (cwd = /app/)
   npx tsx lib/seed.ts
+  # Copia nella posizione corretta per il server standalone
+  cp data/db.json .next/standalone/data/db.json
+  echo "📁 Database copiato in .next/standalone/data/"
 fi
 
 echo "🚀 Avvio del server..."
-# HOSTNAME=0.0.0.0 necessario affinché Railway possa raggiungere il container
 HOSTNAME=0.0.0.0 node .next/standalone/server.js
