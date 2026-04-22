@@ -27,7 +27,7 @@ export default function CategoriePage() {
 
   async function handleSaveAcc() {
     setSaving(true);
-    await fetch('/api/categorie', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'accounting', ...accForm }) });
+    await fetch('/api/categorie', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...accForm, type: 'accounting' }) });
     setShowAccForm(false);
     setSaving(false);
     fetchData();

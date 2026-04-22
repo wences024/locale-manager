@@ -157,13 +157,13 @@ export default function FatturaDetailPage() {
                         <td><input type="number" step="0.01" className="input text-xs py-1 w-20" value={editData.unitPrice || ''} onChange={(e) => setEditData((p) => ({ ...p, unitPrice: parseFloat(e.target.value) }))} /></td>
                         <td><input type="number" step="0.01" className="input text-xs py-1 w-20" value={editData.totalPrice || ''} onChange={(e) => setEditData((p) => ({ ...p, totalPrice: parseFloat(e.target.value) }))} /></td>
                         <td>
-                          <select className="input text-xs py-1" value={editData.accountingCategoryId || ''} onChange={(e) => setEditData((p) => ({ ...p, accountingCategoryId: e.target.value })}>
+                          <select className="input text-xs py-1" value={editData.accountingCategoryId || ''} onChange={(e) => setEditData((p) => ({ ...p, accountingCategoryId: e.target.value }))}>
                             <option value="">— Scegli —</option>
                             {accCats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                           </select>
                         </td>
                         <td>
-                          <select className="input text-xs py-1" value={editData.inventoryCategoryId || ''} onChange={(e) => setEditData((p) => ({ ...p, inventoryCategoryId: e.target.value })}>
+                          <select className="input text-xs py-1" value={editData.inventoryCategoryId || ''} onChange={(e) => setEditData((p) => ({ ...p, inventoryCategoryId: e.target.value }))}>
                             <option value="">— Scegli —</option>
                             {invCats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                           </select>
