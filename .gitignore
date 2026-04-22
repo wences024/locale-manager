@@ -9,8 +9,8 @@ out/
 build/
 dist/
 
-# Database local (da non committare — Railway usa il suo)
-data/
+# Database locale (non committare il db.json)
+data/db.json
 
 # Environment variables
 .env
