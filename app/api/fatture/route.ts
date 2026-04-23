@@ -125,5 +125,5 @@ export async function POST(req: Request) {
     unresolvedProducts: [...d.unresolvedProducts, ...unresolved],
   }));
 
-  return NextResponse.json({ invoice, lines, unresolved });
+  return NextResponse.json({ invoice, lines, unresolved, _parsingMethod: (parsed as any)._parsingMethod });
 }

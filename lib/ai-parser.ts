@@ -153,6 +153,7 @@ Regole:
 
 async function parseWithGPT(
   fileBuffer: Buffer,
+  fileName: string,
   mimeType: string,
   db: AppData
 ): Promise<ParsedInvoiceData | null> {
@@ -170,6 +171,7 @@ async function parseWithGPT(
   const imageMediaType = mimeType === 'application/pdf' ? 'image/jpeg' : mimeType as 'image/jpeg' | 'image/png' | 'image/webp';
 
   try {
+    console.log(`[ai-parser] Invio a GPT-4o: ${fileName} (${(fileBuffer.length / 1024).toFixed(0)} KB, ${mimeType})`);
     const response = await client.chat.completions.create({
       model: 'gpt-4o',
       max_tokens: 2000,
@@ -241,9 +243,10 @@ async function parseWithGPT(
       lines,
       confidence: parseFloat(parsed.confidence) || 0.8,
     };
-  } catch (err) {
-    console.error('[ai-parser] Errore GPT:', err);
-    return null;
+  } catch (err: any) {
+    console.error('[ai-parser] Errore GPT:', err?.message || err);
+    // Rilancia così la route può catturare e mostrare l'errore reale
+    throw new Error(`GPT-4o error: ${err?.message || String(err)}`);
   }
 }
 
@@ -302,19 +305,27 @@ export async function parseInvoiceFile(
   fileBuffer: Buffer,
   fileName: string,
   mimeType: string
-): Promise<ParsedInvoiceData> {
+): Promise<ParsedInvoiceData & { _parsingMethod: string }> {
   const db = readDb();
+  const apiKey = process.env.OPENAI_API_KEY;
 
-  // Prova con GPT-4o
-  const gptResult = await parseWithGPT(fileBuffer, mimeType, db);
-  if (gptResult) {
-    console.log(`[ai-parser] GPT-4o ha analizzato "${fileName}" — ${gptResult.lines.length} righe, confidenza ${(gptResult.confidence * 100).toFixed(0)}%`);
-    return gptResult;
+  if (!apiKey) {
+    console.log(`[ai-parser] OPENAI_API_KEY assente — uso mock per "${fileName}"`);
+    return { ...mockParseInvoice(fileName, db), _parsingMethod: 'mock_no_key' };
   }
 
-  // Fallback al mock
-  console.log(`[ai-parser] Uso mock per "${fileName}"`);
-  return mockParseInvoice(fileName, db);
+  // Prova con GPT-4o
+  try {
+    const gptResult = await parseWithGPT(fileBuffer, fileName, mimeType, db);
+    if (gptResult) {
+      console.log(`[ai-parser] ✅ GPT-4o OK: "${fileName}" — ${gptResult.lines.length} righe, confidenza ${(gptResult.confidence * 100).toFixed(0)}%`);
+      return { ...gptResult, _parsingMethod: 'gpt-4o' };
+    }
+    return { ...mockParseInvoice(fileName, db), _parsingMethod: 'mock_null_result' };
+  } catch (err: any) {
+    console.error(`[ai-parser] ❌ GPT-4o fallito: ${err.message}`);
+    return { ...mockParseInvoice(fileName, db), _parsingMethod: `mock_error: ${err.message}` };
+  }
 }
 
 // Mantieni compatibilità con codice esistente
