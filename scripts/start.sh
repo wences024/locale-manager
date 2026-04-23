@@ -11,12 +11,13 @@ cp -r public .next/standalone/public 2>/dev/null || true
 mkdir -p .next/standalone/data
 
 if [ ! -f ".next/standalone/data/db.json" ]; then
-  echo "📦 Database non trovato, inizializzazione dati demo..."
-  # Seed scrive in ./data/db.json (cwd = /app/)
+  echo "📦 Database non trovato, inizializzazione categorie di base..."
   npx tsx lib/seed.ts
   # Copia nella posizione corretta per il server standalone
-  cp data/db.json .next/standalone/data/db.json
-  echo "📁 Database copiato in .next/standalone/data/"
+  if [ -f "data/db.json" ]; then
+    cp data/db.json .next/standalone/data/db.json
+    echo "📁 Database copiato in .next/standalone/data/"
+  fi
 fi
 
 echo "🚀 Avvio del server..."

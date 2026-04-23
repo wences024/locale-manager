@@ -1,9 +1,14 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
+import { readDb } from '@/lib/db';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  // Se non ci sono utenti → primo avvio, vai al setup
+  const db = readDb();
+  if (db.users.length === 0) redirect('/setup');
+
   const user = await getSession();
   if (!user) redirect('/login');
 

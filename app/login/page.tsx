@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('demo@locale.it');
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -87,10 +87,10 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 p-4 bg-brand-50 rounded-xl text-sm">
-            <p className="font-medium text-brand-800 mb-1">🔑 Credenziali Demo</p>
-            <p className="text-brand-700">Email: <span className="font-mono font-semibold">demo@locale.it</span></p>
-            <p className="text-brand-700">Password: <span className="font-mono font-semibold">demo123</span></p>
+          <div className="mt-4 text-center">
+            <a href="/setup" className="text-sm text-brand-600 hover:underline">
+              Primo accesso? Configura il tuo account →
+            </a>
           </div>
         </div>
 
