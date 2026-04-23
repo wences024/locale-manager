@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { readDb, updateDb } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
-import { mockParseInvoicePdf, classifyProduct } from '@/lib/ai-parser';
+import { parseInvoiceFile, classifyProduct } from '@/lib/ai-parser';
 
 export async function GET(req: Request) {
   const user = await getSession();
@@ -62,8 +62,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ invoice });
   }
 
-  // Mock parsing AI del file
-  const parsed = mockParseInvoicePdf(file!.name);
+  // Parsing con GPT-4o Vision (fallback al mock se OPENAI_API_KEY non è impostata)
+  const arrayBuffer = await file!.arrayBuffer();
+  const fileBuffer = Buffer.from(arrayBuffer);
+  const mimeType = file!.type || 'image/jpeg';
+  const parsed = await parseInvoiceFile(fileBuffer, file!.name, mimeType);
   const invoiceId = uuidv4();
 
   const invoice = {
