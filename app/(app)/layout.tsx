@@ -4,6 +4,9 @@ import { readDb } from '@/lib/db';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 
+// Forza rendering dinamico — legge dal db ad ogni richiesta, mai dalla cache
+export const dynamic = 'force-dynamic';
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   // Se non ci sono utenti → primo avvio, vai al setup
   const db = readDb();
