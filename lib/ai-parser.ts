@@ -5,6 +5,8 @@
  */
 
 import OpenAI from 'openai';
+// pdf-parse viene importato dinamicamente dentro la funzione per evitare
+// il self-test che cerca ./test/data/05-versions-space.pdf al momento del build
 import { readDb } from './db';
 import type { AppData, ClassificationRule, AccountingCategory, InventoryCategory } from './types';
 
@@ -165,31 +167,44 @@ async function parseWithGPT(
 
   const client = new OpenAI({ apiKey });
   const systemPrompt = buildSystemPrompt(db.accountingCategories, db.inventoryCategories);
-  const base64 = fileBuffer.toString('base64');
-
-  // GPT-4o supporta immagini e PDF come image_url con base64
-  const imageMediaType = mimeType === 'application/pdf' ? 'image/jpeg' : mimeType as 'image/jpeg' | 'image/png' | 'image/webp';
+  const isPdf = mimeType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
 
   try {
     console.log(`[ai-parser] Invio a GPT-4o: ${fileName} (${(fileBuffer.length / 1024).toFixed(0)} KB, ${mimeType})`);
+
+    let userContent: OpenAI.Chat.ChatCompletionContentPart[];
+
+    if (isPdf) {
+      // PDF → estrai testo e mandalo come testo (più economico e preciso)
+      // Import dinamico per evitare che pdf-parse faccia il self-test al build time
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pdfParseFn = require('pdf-parse') as (buf: Buffer) => Promise<{ text: string; numpages: number }>;
+      const pdfData = await pdfParseFn(fileBuffer);
+      const pdfText = pdfData.text.trim();
+      if (!pdfText) throw new Error('PDF senza testo estraibile — prova a caricare una foto della fattura');
+      console.log(`[ai-parser] PDF testo estratto: ${pdfText.length} caratteri`);
+      userContent = [
+        { type: 'text', text: `Ecco il testo estratto dalla fattura PDF:\n\n${pdfText}\n\nAnalizza e restituisci il JSON.` },
+      ];
+    } else {
+      // Immagine → manda come base64 vision
+      const base64 = fileBuffer.toString('base64');
+      const imageMediaType = mimeType as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+      userContent = [
+        {
+          type: 'image_url',
+          image_url: { url: `data:${imageMediaType};base64,${base64}`, detail: 'high' },
+        },
+        { type: 'text', text: 'Analizza questa fattura e restituisci il JSON.' },
+      ];
+    }
+
     const response = await client.chat.completions.create({
       model: 'gpt-4o',
-      max_tokens: 2000,
+      max_tokens: 2500,
       messages: [
         { role: 'system', content: systemPrompt },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:${imageMediaType};base64,${base64}`,
-                detail: 'high',
-              },
-            },
-            { type: 'text', text: 'Analizza questa fattura e restituisci il JSON.' },
-          ],
-        },
+        { role: 'user', content: userContent },
       ],
     });
 
